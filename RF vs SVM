@@ -1,0 +1,70 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.svm import SVR
+from sklearn.metrics import mean_squared_error
+import matplotlib.pyplot as plt
+
+# Step 1: Load the dataset
+data = pd.read_csv('/content/CO2 Emissions.csv')  # Replace 'your_dataset.csv' with the actual file path
+
+# Step 2: Preprocess the data
+# (You may need to handle missing values, convert categorical variables, etc.)
+
+# Step 3: Split the data into training and testing sets
+X = data[['Engine Size(L)', 'Cylinders', 'Fuel Consumption City (L/100 km)', 'Fuel Consumption Hwy (L/100 km)', 'Fuel Consumption Comb (L/100 km)']]
+y = data['CO2 Emissions(g/km)']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Define values for C for SVM and n_estimators for Random Forest
+C_values = [0.1, 1, 10, 100, 1000]
+n_estimators_values = [10, 50, 100, 150, 200, 250, 300, 350, 400, 450]
+
+# Lists to store accuracies
+svm_accuracies = []
+rf_accuracies = []
+
+# Step 4: Train SVM and Random Forest models with different hyperparameters
+for C in C_values:
+    # Train SVM model
+    svm_model = SVR(C=C)
+    svm_model.fit(X_train, y_train)
+    svm_predictions = svm_model.predict(X_test)
+    svm_accuracy = 100 - (mean_squared_error(y_test, svm_predictions) ** 0.5)
+    svm_accuracies.append(svm_accuracy)
+
+for n_estimators in n_estimators_values:
+    # Train Random Forest model
+    random_forest_model = RandomForestRegressor(n_estimators=n_estimators, random_state=42)
+    random_forest_model.fit(X_train, y_train)
+    rf_predictions = random_forest_model.predict(X_test)
+    rf_accuracy = 100 - (mean_squared_error(y_test, rf_predictions) ** 0.5)
+    rf_accuracies.append(rf_accuracy)
+
+# Step 5: Evaluate and print the accuracies
+print("Accuracy of SVM:")
+for i, C in enumerate(C_values):
+    print(f"With C={C}: {svm_accuracies[i]:.2f}%")
+
+print("\nAccuracy of Random Forest:")
+for i, n_estimators in enumerate(n_estimators_values):
+    print(f"With {n_estimators} estimators: {rf_accuracies[i]:.2f}%")
+
+# Step 6: Find the best accuracies and corresponding hyperparameters
+best_svm_accuracy = max(svm_accuracies)
+best_svm_C = C_values[svm_accuracies.index(best_svm_accuracy)]
+best_rf_accuracy = max(rf_accuracies)
+best_rf_n_estimators = n_estimators_values[rf_accuracies.index(best_rf_accuracy)]
+
+print(f"\nBest SVM accuracy: {best_svm_accuracy:.2f}% (with C={best_svm_C})")
+print(f"Best Random Forest accuracy: {best_rf_accuracy:.2f}% (with n_estimators={best_rf_n_estimators})")
+
+# Step 7: Visualize the results
+plt.plot(C_values, svm_accuracies, label='SVM')
+plt.plot(n_estimators_values, rf_accuracies, label='Random Forest')
+plt.xlabel('C / Number of Estimators')
+plt.ylabel('Accuracy')
+plt.title('Accuracy Comparison of SVM and Random Forest')
+plt.legend()
+plt.grid(True)
+plt.show()
