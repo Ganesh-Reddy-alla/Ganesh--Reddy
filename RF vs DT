@@ -1,0 +1,73 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.metrics import mean_squared_error
+import matplotlib.pyplot as plt
+
+# Step 1: Load the dataset
+data = pd.read_csv('/content/CO2 Emissions.csv')  # Replace 'your_dataset.csv' with the actual file path
+
+# Step 2: Preprocess the data
+# (You may need to handle missing values, convert categorical variables, etc.)
+
+# Step 3: Split the data into training and testing sets
+X = data[['Engine Size(L)', 'Cylinders', 'Fuel Consumption City (L/100 km)', 'Fuel Consumption Hwy (L/100 km)', 'Fuel Consumption Comb (L/100 km)']]
+y = data['CO2 Emissions(g/km)']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Define values for max_depth for Decision Tree and n_estimators for Random Forest
+max_depth_values = [None, 5, 10, 15, 20, 25, 30, 35, 40, 45]
+n_estimators_values = [10, 50, 100, 150, 200, 250, 300, 350, 400, 450]
+
+# Lists to store accuracies
+dt_accuracies = []
+rf_accuracies = []
+
+# Step 4: Train Decision Tree and Random Forest models with different hyperparameters
+for max_depth in max_depth_values:
+    # Train Decision Tree model
+    decision_tree_model = DecisionTreeRegressor(max_depth=max_depth, random_state=42)
+    decision_tree_model.fit(X_train, y_train)
+    dt_predictions = decision_tree_model.predict(X_test)
+    dt_accuracy = 100 - (mean_squared_error(y_test, dt_predictions) ** 0.5)
+    dt_accuracies.append(dt_accuracy)
+
+for n_estimators in n_estimators_values:
+    # Train Random Forest model
+    random_forest_model = RandomForestRegressor(n_estimators=n_estimators, random_state=42)
+    random_forest_model.fit(X_train, y_train)
+    rf_predictions = random_forest_model.predict(X_test)
+    rf_accuracy = 100 - (mean_squared_error(y_test, rf_predictions) ** 0.5)
+    rf_accuracies.append(rf_accuracy)
+
+# Step 5: Evaluate and print the accuracies
+print("Accuracy of Decision Tree:")
+for i, max_depth in enumerate(max_depth_values):
+    if max_depth is None:
+        print(f"With default parameters: {dt_accuracies[i]:.2f}%")
+    else:
+        print(f"With max_depth={max_depth}: {dt_accuracies[i]:.2f}%")
+
+print("\nAccuracy of Random Forest:")
+for i, n_estimators in enumerate(n_estimators_values):
+    print(f"With {n_estimators} estimators: {rf_accuracies[i]:.2f}%")
+
+# Step 6: Find the best accuracies and corresponding hyperparameters
+best_dt_accuracy = max(dt_accuracies)
+best_dt_max_depth = max_depth_values[dt_accuracies.index(best_dt_accuracy)]
+best_rf_accuracy = max(rf_accuracies)
+best_rf_n_estimators = n_estimators_values[rf_accuracies.index(best_rf_accuracy)]
+
+print(f"\nBest Decision Tree accuracy: {best_dt_accuracy:.2f}% (with max_depth={best_dt_max_depth})")
+print(f"Best Random Forest accuracy: {best_rf_accuracy:.2f}% (with n_estimators={best_rf_n_estimators})")
+
+# Step 7: Visualize the results
+plt.plot(max_depth_values, dt_accuracies, label='Decision Tree')
+plt.plot(n_estimators_values, rf_accuracies, label='Random Forest')
+plt.xlabel('Max Depth / Number of Estimators')
+plt.ylabel('Accuracy')
+plt.title('Accuracy Comparison of Decision Tree and Random Forest')
+plt.legend()
+plt.grid(True)
+plt.show()
