@@ -1,0 +1,74 @@
+                                                            RF VS LR
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+import matplotlib.pyplot as plt
+
+# Step 1: Load the dataset
+data = pd.read_csv('/content/CO2 Emissions.csv')  # Replace 'your_dataset.csv' with the actual file path
+
+# Step 2: Preprocess the data
+# (You may need to handle missing values, convert categorical variables, etc.)
+
+# Step 3: Split the data into training and testing sets
+X = data[['Engine Size(L)', 'Cylinders', 'Fuel Consumption City (L/100 km)', 'Fuel Consumption Hwy (L/100 km)', 'Fuel Consumption Comb (L/100 km)']]
+y = data['CO2 Emissions(g/km)']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Define epoch and estimator values
+rf_estimator_values = [10, 50, 100, 150, 200, 250, 300, 350, 400, 450]
+
+# Lists to store accuracies
+rf_accuracies = []
+lr_accuracies = []
+
+# Step 4: Train Random Forest and Linear Regression models
+for n_estimators in rf_estimator_values:
+    # Train Random Forest model
+    random_forest_model = RandomForestRegressor(n_estimators=n_estimators, random_state=42)
+    random_forest_model.fit(X_train, y_train)
+    rf_predictions = random_forest_model.predict(X_test)
+    rf_accuracy = 100 - (mean_squared_error(y_test, rf_predictions) ** 0.5)
+    rf_accuracies.append(rf_accuracy)
+
+    # Train Linear Regression model
+    linear_reg_model = LinearRegression()
+    linear_reg_model.fit(X_train, y_train)
+    lr_predictions = linear_reg_model.predict(X_test)
+    lr_accuracy = 100 - (mean_squared_error(y_test, lr_predictions) ** 0.5)
+    lr_accuracies.append(lr_accuracy)
+
+# Step 5: Evaluate and print the accuracies
+print("Accuracy of Random Forest:")
+for i, n_estimators in enumerate(rf_estimator_values):
+    print(f"With {n_estimators} estimators: {rf_accuracies[i]:.2f}%")
+
+print("\nAccuracy of Linear Regression:")
+for i, _ in enumerate(rf_estimator_values):  # Use same index for printing
+    print(f"With default parameters: {lr_accuracies[i]:.2f}%")
+
+# Step 6: Compare the best accuracies
+best_rf_accuracy = max(rf_accuracies)
+best_lr_accuracy = max(lr_accuracies)
+if best_rf_accuracy > best_lr_accuracy:
+    print("\nRandom Forest has a higher accuracy compared to Linear Regression.")
+else:
+    print("\nLinear Regression has a higher accuracy compared to Random Forest.")
+
+# Step 7: Visualize the results
+plt.plot(rf_estimator_values, rf_accuracies, label='Random Forest')
+plt.xlabel('Number of Estimators')
+plt.ylabel('Accuracy')
+plt.title('Accuracy of Random Forest with Different Number of Estimators')
+plt.legend()
+plt.show()
+
+plt.plot(rf_estimator_values, lr_accuracies, label='Linear Regression')
+plt.xlabel('Number of Estimators (Random Forest)')  # Adjust label for alignment
+plt.ylabel('Accuracy')
+plt.title('Accuracy of Linear Regression (Default Parameters)')
+plt.legend()
+plt.show()
